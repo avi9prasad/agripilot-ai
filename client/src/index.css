@@ -1,0 +1,468 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --soil-950: #1a1611;
+  --soil-900: #211c16;
+  --soil-800: #2d2620;
+  --soil-700: #3c332a;
+  --hairline: #453b30;
+  --wheat-100: #f2e9d8;
+  --wheat-200: #e6d8bd;
+  --mist-400: #a49b8c;
+  --chlorophyll-500: #7ba045;
+  --chlorophyll-400: #9bc465;
+  --amber-500: #cf9a3e;
+  --clay-500: #b8552f;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--soil-950);
+  color: var(--wheat-100);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--chlorophyll-500);
+  color: var(--soil-950);
+}
+
+:focus-visible {
+  outline: 2px solid var(--chlorophyll-400);
+  outline-offset: 2px;
+}
+
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  padding: 4rem 1.5rem 2.5rem;
+  border-bottom: 1px solid var(--hairline);
+  background: radial-gradient(120% 140% at 15% 0%, #26201a 0%, var(--soil-950) 60%);
+}
+
+.hero-inner {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chlorophyll-400);
+  margin: 0 0 1rem;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.1rem, 5vw, 3.4rem);
+  line-height: 1.08;
+  margin: 0 0 1rem;
+  color: var(--wheat-100);
+  max-width: 16ch;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--mist-400);
+  max-width: 56ch;
+  margin: 0;
+}
+
+/* ---------- Layout ---------- */
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+  display: grid;
+  gap: 2.5rem;
+}
+
+.panel-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.panel-label .idx {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--chlorophyll-400);
+}
+
+.panel-label h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.3rem;
+  margin: 0;
+  color: var(--wheat-100);
+}
+
+/* ---------- Context bar ---------- */
+
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.field {
+  background: var(--soil-900);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mist-400);
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: transparent;
+  border: none;
+  color: var(--wheat-100);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0;
+  width: 100%;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 2.2em;
+  font-family: var(--font-body);
+}
+
+.field select option {
+  background: var(--soil-800);
+}
+
+/* ---------- Zone ledger ---------- */
+
+.ledger {
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.zone-row {
+  display: grid;
+  grid-template-columns: 2rem 1.3fr 1fr 1fr 1fr 1.1fr 2.2rem;
+  gap: 1px;
+  background: var(--hairline);
+  align-items: stretch;
+}
+
+.zone-row + .zone-row {
+  margin-top: 1px;
+}
+
+.zone-row .zone-num {
+  background: var(--soil-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--mist-400);
+}
+
+.zone-row .field {
+  padding: 0.7rem 0.85rem;
+}
+
+.zone-remove {
+  background: var(--soil-800);
+  border: none;
+  color: var(--mist-400);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: color 0.15s ease;
+}
+
+.zone-remove:hover {
+  color: var(--clay-500);
+}
+
+.ledger-header {
+  display: grid;
+  grid-template-columns: 2rem 1.3fr 1fr 1fr 1fr 1.1fr 2.2rem;
+  gap: 1px;
+  background: var(--hairline);
+}
+
+.ledger-header span {
+  background: var(--soil-700);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--mist-400);
+  padding: 0.55rem 0.85rem;
+}
+
+.add-zone {
+  margin-top: 0.85rem;
+  background: none;
+  border: 1px dashed var(--hairline);
+  color: var(--chlorophyll-400);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.add-zone:hover {
+  border-color: var(--chlorophyll-500);
+  color: var(--chlorophyll-500);
+}
+
+/* ---------- Submit ---------- */
+
+.submit-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.submit-btn {
+  background: var(--chlorophyll-500);
+  color: var(--soil-950);
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.6rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: var(--chlorophyll-400);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.submit-btn:disabled {
+  background: var(--soil-700);
+  color: var(--mist-400);
+  cursor: not-allowed;
+}
+
+.status-text {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--mist-400);
+}
+
+.status-text.scanning::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  animation: scan-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes scan-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+}
+
+.error-text {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--clay-500);
+}
+
+/* ---------- Results ---------- */
+
+.summary-card {
+  background: var(--soil-900);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--chlorophyll-500);
+  border-radius: 6px;
+  padding: 1.1rem 1.3rem;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--wheat-200);
+}
+
+.zone-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.zone-card {
+  background: var(--soil-900);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 1.1rem 1.2rem;
+  border-left: 3px solid var(--mist-400);
+}
+
+.zone-card.priority-high {
+  border-left-color: var(--clay-500);
+}
+
+.zone-card.priority-medium {
+  border-left-color: var(--amber-500);
+}
+
+.zone-card.priority-low {
+  border-left-color: var(--chlorophyll-500);
+}
+
+.zone-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+
+.zone-card-head h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--wheat-100);
+}
+
+.risk-pill {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 100px;
+  border: 1px solid currentColor;
+}
+
+.risk-pill.low {
+  color: var(--chlorophyll-400);
+}
+
+.risk-pill.moderate {
+  color: var(--amber-500);
+}
+
+.risk-pill.high {
+  color: var(--clay-500);
+}
+
+.zone-card-row {
+  margin-bottom: 0.7rem;
+}
+
+.zone-card-row:last-child {
+  margin-bottom: 0;
+}
+
+.zone-card-row .k {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mist-400);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.zone-card-row .v {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--wheat-200);
+  margin: 0;
+}
+
+.tip-card {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--chlorophyll-400);
+  border-top: 1px dashed var(--hairline);
+  padding-top: 1rem;
+  line-height: 1.6;
+}
+
+.empty-state {
+  color: var(--mist-400);
+  font-size: 0.92rem;
+  border: 1px dashed var(--hairline);
+  border-radius: 6px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+footer {
+  border-top: 1px solid var(--hairline);
+  padding: 1.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--mist-400);
+}
+
+@media (max-width: 720px) {
+  .zone-row,
+  .ledger-header {
+    grid-template-columns: 1fr;
+  }
+  .zone-row .zone-num {
+    display: none;
+  }
+}
