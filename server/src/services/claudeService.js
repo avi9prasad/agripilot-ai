@@ -1,10 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = process.env.ANTHROPIC_API_KEY
+// Provider selection: use Claude if ANTHROPIC_API_KEY is set, otherwise fall back
+// to DeepSeek if DEEPSEEK_API_KEY is set, otherwise use the heuristic fallback.
+const anthropicClient = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || null;
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-chat";
 
 const SYSTEM_PROMPT = `You are AgriPilotAI, an expert precision-agriculture advisor.
 You receive structured sensor and weather data for one or more field zones and must
@@ -33,32 +37,65 @@ Do not invent data that wasn't provided or implied; reason from what's given.`;
  * @param {object} context - farm-level context (crop, region, notes)
  */
 export async function getFarmRecommendations(zones, context) {
-  if (!client) {
-    return heuristicFallback(zones, context);
-  }
-
   const userPrompt = `Farm context: ${JSON.stringify(context)}
 
 Zone data: ${JSON.stringify(zones)}
 
 Return the JSON object described in the system prompt only.`;
 
-  try {
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1500,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    });
+  if (anthropicClient) {
+    try {
+      const response = await anthropicClient.messages.create({
+        model: MODEL,
+        max_tokens: 1500,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userPrompt }],
+      });
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    const raw = textBlock ? textBlock.text.trim() : "";
-    const cleaned = raw.replace(/^```json\s*|```$/g, "").trim();
-    return JSON.parse(cleaned);
-  } catch (err) {
-    console.error("Claude API error, falling back to heuristics:", err.message);
-    return heuristicFallback(zones, context);
+      const textBlock = response.content.find((b) => b.type === "text");
+      const raw = textBlock ? textBlock.text.trim() : "";
+      return parseModelJson(raw);
+    } catch (err) {
+      console.error("Claude API error, falling back:", err.message);
+    }
   }
+
+  if (DEEPSEEK_API_KEY) {
+    try {
+      const res = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: DEEPSEEK_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.4,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`DeepSeek API returned ${res.status}: ${await res.text()}`);
+      }
+
+      const data = await res.json();
+      const raw = data.choices?.[0]?.message?.content?.trim() || "";
+      return parseModelJson(raw);
+    } catch (err) {
+      console.error("DeepSeek API error, falling back to heuristics:", err.message);
+    }
+  }
+
+  return heuristicFallback(zones, context);
+}
+
+function parseModelJson(raw) {
+  const cleaned = raw.replace(/^```json\s*|```$/g, "").trim();
+  return JSON.parse(cleaned);
 }
 
 /**

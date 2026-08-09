@@ -11,7 +11,7 @@ export default function ZoneRow({ zone, index, onChange, onRemove, removable }) 
           id={`name-${index}`}
           value={zone.name}
           onChange={update("name")}
-          placeholder="Zone A"
+          placeholder="e.g. Zone A"
         />
       </div>
 
@@ -24,7 +24,7 @@ export default function ZoneRow({ zone, index, onChange, onRemove, removable }) 
           max="100"
           value={zone.soilMoisture}
           onChange={update("soilMoisture")}
-          placeholder="35"
+          placeholder="e.g. 35"
         />
       </div>
 
@@ -35,7 +35,7 @@ export default function ZoneRow({ zone, index, onChange, onRemove, removable }) 
           type="number"
           value={zone.temperature}
           onChange={update("temperature")}
-          placeholder="24"
+          placeholder="e.g. 24"
         />
       </div>
 
@@ -48,7 +48,7 @@ export default function ZoneRow({ zone, index, onChange, onRemove, removable }) 
           max="100"
           value={zone.humidity}
           onChange={update("humidity")}
-          placeholder="55"
+          placeholder="e.g. 55"
         />
       </div>
 
