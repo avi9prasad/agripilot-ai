@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ZoneRow from "./components/ZoneRow.jsx";
 import ResultsPanel from "./components/ResultsPanel.jsx";
+import BenchmarkPanel from "./components/BenchmarkPanel.jsx";
 
 const emptyZone = () => ({
   name: "",
@@ -169,6 +170,10 @@ export default function App() {
           </div>
           <ResultsPanel result={result} />
         </section>
+
+        {result && (result.yieldBenchmark || result.soilFacts) && (
+          <BenchmarkPanel yieldBenchmark={result.yieldBenchmark} soilFacts={result.soilFacts} />
+        )}
       </main>
 
       <footer>AgriPilotAI — built for the WeMakeDevs × Zerops Challenge</footer>

@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { computeHeuristicRecommendations } from "./agronomyRules.js";
 
 // Provider selection: use Claude if ANTHROPIC_API_KEY is set, otherwise fall back
 // to DeepSeek if DEEPSEEK_API_KEY is set, otherwise use the heuristic fallback.
@@ -7,8 +8,21 @@ const anthropicClient = process.env.ANTHROPIC_API_KEY
   : null;
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || null;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || null;
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-chat";
+
+// DigitalOcean Serverless Inference: OpenAI-compatible, one key unlocks 55+ models
+// (Claude, DeepSeek, Llama, etc). Useful if you're using their free trial credit.
+const DO_API_KEY = process.env.DO_MODEL_ACCESS_KEY || null;
+const DO_MODEL = process.env.DO_MODEL || "openai-gpt-4o-mini";
+
+// Google Gemini API (AI Studio): genuinely free tier, no card required, no expiration.
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || null;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const SYSTEM_PROMPT = `You are AgriPilotAI, an expert precision-agriculture advisor.
 You receive structured sensor and weather data for one or more field zones and must
@@ -60,6 +74,36 @@ Return the JSON object described in the system prompt only.`;
     }
   }
 
+  if (OPENAI_API_KEY) {
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.4,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`OpenAI API returned ${res.status}: ${await res.text()}`);
+      }
+
+      const data = await res.json();
+      const raw = data.choices?.[0]?.message?.content?.trim() || "";
+      return parseModelJson(raw);
+    } catch (err) {
+      console.error("OpenAI API error, falling back:", err.message);
+    }
+  }
+
   if (DEEPSEEK_API_KEY) {
     try {
       const res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -86,63 +130,69 @@ Return the JSON object described in the system prompt only.`;
       const raw = data.choices?.[0]?.message?.content?.trim() || "";
       return parseModelJson(raw);
     } catch (err) {
-      console.error("DeepSeek API error, falling back to heuristics:", err.message);
+      console.error("DeepSeek API error, falling back:", err.message);
     }
   }
 
-  return heuristicFallback(zones, context);
+  if (DO_API_KEY) {
+    try {
+      const res = await fetch("https://inference.do-ai.run/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${DO_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: DO_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.4,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`DigitalOcean Inference returned ${res.status}: ${await res.text()}`);
+      }
+
+      const data = await res.json();
+      const raw = data.choices?.[0]?.message?.content?.trim() || "";
+      return parseModelJson(raw);
+    } catch (err) {
+      console.error("DigitalOcean Inference error, falling back to heuristics:", err.message);
+    }
+  }
+
+  if (GEMINI_API_KEY) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          generationConfig: { temperature: 0.4 },
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Gemini API returned ${res.status}: ${await res.text()}`);
+      }
+
+      const data = await res.json();
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      return parseModelJson(raw);
+    } catch (err) {
+      console.error("Gemini API error, falling back to heuristics:", err.message);
+    }
+  }
+
+  return computeHeuristicRecommendations(zones, context);
 }
 
 function parseModelJson(raw) {
   const cleaned = raw.replace(/^```json\s*|```$/g, "").trim();
   return JSON.parse(cleaned);
-}
-
-/**
- * Deterministic rule-based fallback so the app still works with no API key
- * (useful for demoing/judging without exposing a live key).
- */
-function heuristicFallback(zones, context) {
-  const results = zones.map((z) => {
-    const moisture = Number(z.soilMoisture) || 0;
-    const temp = Number(z.temperature) || 0;
-    const humidity = Number(z.humidity) || 0;
-
-    let irrigation;
-    if (moisture < 25) irrigation = "Low soil moisture — irrigate today at high intensity (~80-90% of standard rate).";
-    else if (moisture < 45) irrigation = "Moderate moisture — irrigate at medium intensity (~50-60% of standard rate) every 3-4 days.";
-    else irrigation = "Moisture is adequate — hold irrigation and re-check in 5-7 days.";
-
-    let fertilizer;
-    if (z.nutrientLevel === "low") fertilizer = "Nutrient levels are low — apply a balanced NPK fertilizer at 80-90% of the recommended rate.";
-    else if (z.nutrientLevel === "high") fertilizer = "Nutrients already high — apply minimal fertilizer (~10%) to avoid runoff.";
-    else fertilizer = "Nutrients moderate — apply 50-60% of the recommended fertilizer rate.";
-
-    let pestRisk = "low";
-    if (temp > 27 && humidity > 55) pestRisk = "high";
-    else if (temp > 22 && humidity > 45) pestRisk = "moderate";
-
-    const priority = pestRisk === "high" || moisture < 25 ? "high" : pestRisk === "moderate" ? "medium" : "low";
-
-    return {
-      name: z.name || "Zone",
-      irrigation,
-      fertilizer,
-      pestRisk,
-      pestNotes:
-        pestRisk === "high"
-          ? "Warm, humid conditions favor pest/disease pressure — scout this zone within 48 hours and consider a preventive treatment."
-          : pestRisk === "moderate"
-          ? "Conditions are borderline — monitor for early signs of stress or pests over the next week."
-          : "Low risk under current conditions — routine monitoring is sufficient.",
-      priority,
-    };
-  });
-
-  return {
-    summary: `Heuristic analysis across ${zones.length} zone(s) for ${context.cropType || "your crop"}. This is a rule-based fallback (no ANTHROPIC_API_KEY configured) — set one for full AI-generated recommendations.`,
-    zones: results,
-    sustainabilityTip:
-      "Group zones with similar moisture/nutrient profiles into shared irrigation and fertilizer schedules to cut input waste.",
-  };
 }
